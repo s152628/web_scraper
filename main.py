@@ -1,3 +1,4 @@
+import asyncio
 import requests
 import click
 from bs4 import BeautifulSoup
@@ -7,12 +8,11 @@ from spellchecker import SpellChecker
 from urllib.parse import urljoin
 
 
-def crawl_and_count(url, counter, visited, max_depth, current_depth=0):
+def crawl_and_count(url, visited, max_depth, current_depth=0):
     if current_depth >= max_depth or url in visited:
         return
     visited.add(url)
     try:
-        r = requests.get(url)
         r = requests.get(url)
 
         soup = BeautifulSoup(r.text, "html.parser")
@@ -36,12 +36,25 @@ def crawl_and_count(url, counter, visited, max_depth, current_depth=0):
                 or href.startswith("/")
             ):
                 absolute_url = urljoin(url, href)
-                crawl_and_count(
-                    absolute_url, counter, visited, max_depth, current_depth + 1
-                )
+                crawl_and_count(absolute_url, visited, max_depth, current_depth + 1)
 
     except requests.exceptions.RequestException as e:
         print(f"Error: {e}")
+
+
+async def crawl_and_count_async(url):
+    r = requests.get(url)
+    soup = BeautifulSoup(r.text, "html.parser")
+    text = soup.get_text()
+
+    words = re.findall(r"\b\w+\b", text)
+    spell = SpellChecker()
+    spell_checked_words = []
+    for word in words:
+        if word in spell:
+            spell_checked_words.append(word)
+    counted_words = Counter(spell_checked_words)
+    print(counted_words)
 
 
 @click.command()
@@ -49,12 +62,11 @@ def crawl_and_count(url, counter, visited, max_depth, current_depth=0):
 @click.argument("max_links", type=int)
 @click.argument("type", type=str)
 def gethtml(url, max_links, type):
-    counter = Counter()
     visited = set()
     if type == "synchrone":
-        crawl_and_count(url, counter, visited, max_links)
+        crawl_and_count(url, visited, max_links)
     elif type == "asynchrone":
-        raise NotImplementedError("code moet nog geschreven worden")
+        asyncio.run(crawl_and_count_async(url))
 
 
 if __name__ == "__main__":
