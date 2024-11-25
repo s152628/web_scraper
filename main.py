@@ -46,11 +46,15 @@ def crawl_and_count(url, counter, visited, max_depth, current_depth=0):
 
 @click.command()
 @click.argument("url")
-def gethtml(url):
-    max_links = 2
+@click.argument("max_links", type=int)
+@click.argument("type", type=str)
+def gethtml(url, max_links, type):
     counter = Counter()
     visited = set()
-    crawl_and_count(url, counter, visited, max_links)
+    if type == "synchrone":
+        crawl_and_count(url, counter, visited, max_links)
+    elif type == "asynchrone":
+        raise NotImplementedError("code moet nog geschreven worden")
 
 
 if __name__ == "__main__":
