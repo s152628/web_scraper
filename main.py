@@ -62,7 +62,7 @@ async def crawl_and_count_async(url, visited, max_links, current_depth=0):
         print(counted_words)
 
         links = soup.find_all("a") + soup.find_all("link")
-        tasks = []
+
         for link in links:
             href = link.get("href")
             if href and (
@@ -71,10 +71,8 @@ async def crawl_and_count_async(url, visited, max_links, current_depth=0):
                 or href.startswith("/")
             ):
                 absolute_url = urljoin(url, href)
-                tasks.append(
-                    crawl_and_count(absolute_url, visited, max_links, current_depth + 1)
-                )
-        await asyncio.gather(*tasks)
+                crawl_and_count(absolute_url, visited, max_links, current_depth + 1)
+
     except requests.exceptions.RequestException as e:
         print(f"Error: {e}")
 
