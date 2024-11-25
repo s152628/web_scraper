@@ -8,7 +8,7 @@ from spellchecker import SpellChecker
 from urllib.parse import urljoin
 
 
-def request_url(url):
+def fetch_page(url):
     try:
         r = requests.get(url)
         r.raise_for_status()
@@ -22,7 +22,7 @@ def request_url(url):
     return None
 
 
-def get_text(text):
+def process_text(text):
     words = re.findall(r"\b\w+\b", text)
     spell = SpellChecker()
     spell_checked_words = [word for word in words if word in spell]
@@ -30,7 +30,7 @@ def get_text(text):
     return counted_words
 
 
-def get_links(soup, url):
+def extract_links(soup, url):
     links = soup.find_all("a") + soup.find_all("link")
     absolute_links = []
     for link in links:
@@ -50,14 +50,14 @@ def crawl_and_count(url, visited, max_links, current_depth=0):
         return
     visited.add(url)
 
-    html = request_url(url)
-    if html:
-        soup = BeautifulSoup(html, "html.parser")
+    page_content = fetch_page(url)
+    if page_content:
+        soup = BeautifulSoup(page_content, "html.parser")
         text = soup.get_text()
-        counted_words = get_text(text)
+        counted_words = process_text(text)
         print(counted_words)
 
-        links = get_links(soup, url)
+        links = extract_links(soup, url)
         for link in links:
             crawl_and_count(link, visited, max_links, current_depth + 1)
 
@@ -67,14 +67,14 @@ async def crawl_and_count_async(url, visited, max_links, all_counts, current_dep
         return
     visited.add(url)
 
-    html = await asyncio.to_thread(request_url, url)
-    if html:
-        soup = BeautifulSoup(html, "html.parser")
+    page_content = await asyncio.to_thread(fetch_page, url)
+    if page_content:
+        soup = BeautifulSoup(page_content, "html.parser")
         text = soup.get_text()
-        counted_words = get_text(text)
+        counted_words = process_text(text)
         all_counts.append(counted_words)
 
-        links = get_links(soup, url)
+        links = extract_links(soup, url)
 
         tasks = []
         for link in links:
