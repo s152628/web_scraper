@@ -8,7 +8,7 @@ from urllib.parse import urljoin
 
 
 def crawl_and_count(url, counter, visited, max_depth, current_depth=0):
-    if current_depth > max_depth or url in visited:
+    if current_depth >= max_depth or url in visited:
         return
     visited.add(url)
     try:
